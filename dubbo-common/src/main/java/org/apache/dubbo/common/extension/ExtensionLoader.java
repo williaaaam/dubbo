@@ -85,6 +85,9 @@ public class ExtensionLoader<T> {
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("\\s*[,]+\\s*");
 
+    /**
+     * cache
+     */
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<>(64);
 
     private static final ConcurrentMap<Class<?>, Object> EXTENSION_INSTANCES = new ConcurrentHashMap<>(64);
@@ -142,6 +145,8 @@ public class ExtensionLoader<T> {
 
     private ExtensionLoader(Class<?> type) {
         this.type = type;
+        // ExtensionFactory表示扩展机制的工厂，在Dubbo里面有SPI扩展机制，也有Spring的扩展机制
+        // 对于一个接口，比如IName有两种实现类，一种是我们自己实现的；还有一种就是代理类,dubbo可以帮我们实现代理类
         objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
     }
 
@@ -157,11 +162,12 @@ public class ExtensionLoader<T> {
         if (!type.isInterface()) {
             throw new IllegalArgumentException("Extension type (" + type + ") is not an interface!");
         }
+        // 校验type是否被@SPI注解
         if (!withExtensionAnnotation(type)) {
             throw new IllegalArgumentException("Extension type (" + type +
                     ") is not an extension, because it is NOT annotated with @" + SPI.class.getSimpleName() + "!");
         }
-
+        // Cache
         ExtensionLoader<T> loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         if (loader == null) {
             EXTENSION_LOADERS.putIfAbsent(type, new ExtensionLoader<T>(type));
@@ -364,6 +370,7 @@ public class ExtensionLoader<T> {
     }
 
     private Holder<Object> getOrCreateHolder(String name) {
+        // cache
         Holder<Object> holder = cachedInstances.get(name);
         if (holder == null) {
             cachedInstances.putIfAbsent(name, new Holder<>());
@@ -418,14 +425,17 @@ public class ExtensionLoader<T> {
             throw new IllegalArgumentException("Extension name == null");
         }
         if ("true".equals(name)) {
+            // 查找默认实现类 @SPI注解（value=默认实现类）
             return getDefaultExtension();
         }
         final Holder<Object> holder = getOrCreateHolder(name);
         Object instance = holder.get();
+        // 实现单例 double check
         if (instance == null) {
             synchronized (holder) {
                 instance = holder.get();
                 if (instance == null) {
+                    // 创建实例
                     instance = createExtension(name, wrap);
                     holder.set(instance);
                 }
@@ -585,6 +595,7 @@ public class ExtensionLoader<T> {
                 instance = cachedAdaptiveInstance.get();
                 if (instance == null) {
                     try {
+                        // 创建代理类
                         instance = createAdaptiveExtension();
                         cachedAdaptiveInstance.set(instance);
                     } catch (Throwable t) {
@@ -624,7 +635,12 @@ public class ExtensionLoader<T> {
     }
 
     @SuppressWarnings("unchecked")
+    /**
+     * 实例化name对应的对象
+     * 包含 aop和 IOC
+     */
     private T createExtension(String name, boolean wrap) {
+        // 解析SPI文件，加载文件里面对应key和实现类的map(用到很多缓存)
         Class<?> clazz = getExtensionClasses().get(name);
         if (clazz == null) {
             throw findException(name);
@@ -632,15 +648,17 @@ public class ExtensionLoader<T> {
         try {
             T instance = (T) EXTENSION_INSTANCES.get(clazz);
             if (instance == null) {
+                // 反射创建实例
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
             }
+            // 在实例的基础上依赖注入 IOC
             injectExtension(instance);
 
-
+            // AOP
             if (wrap) {
-
                 List<Class<?>> wrapperClassesList = new ArrayList<>();
+                // IName对饮的包装类
                 if (cachedWrapperClasses != null) {
                     wrapperClassesList.addAll(cachedWrapperClasses);
                     wrapperClassesList.sort(WrapperComparator.COMPARATOR);
@@ -648,10 +666,17 @@ public class ExtensionLoader<T> {
                 }
 
                 if (CollectionUtils.isNotEmpty(wrapperClassesList)) {
-                    for (Class<?> wrapperClass : wrapperClassesList) {
+                    for (Class<?> wrapperClass : wrapperClassesList) { // 多个包装类
                         Wrapper wrapper = wrapperClass.getAnnotation(Wrapper.class);
                         if (wrapper == null
                                 || (ArrayUtils.contains(wrapper.matches(), name) && !ArrayUtils.contains(wrapper.mismatches(), name))) {
+                            // instance 替换为包装类的实例
+                            /**
+                             * public BenzImpl(IName type){
+                             *
+                             * }
+                             * 将type对应实例替换为BenzImpl实例
+                             */
                             instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
                         }
                     }
@@ -678,10 +703,35 @@ public class ExtensionLoader<T> {
 
         try {
             for (Method method : instance.getClass().getMethods()) {
+                // 有setter方法才会依赖注入
+                /**
+                 * public class BenzIOCImpl implements IName {
+                 *
+                 *     private IName iName;
+                 *
+                 *     @Override
+                 *     public String get(Integer userId) {
+                 *         System.out.println("before");
+                 *         String s = iName.get(userId);
+                 *         System.out.println("after");
+                 *         return s;
+                 *     }
+                 *
+                 *     @Override
+                 *     public String get(URL url) {
+                 *         return iName.get(url);
+                 *     }
+                 *
+                 *     public void setiName(IName iName) {
+                 *         this.iName = iName;
+                 *     }
+                 * }
+                 */
                 if (!isSetter(method)) {
                     continue;
                 }
                 /**
+                 * 禁用依赖注入
                  * Check {@link DisableInject} to see if we need auto injection for this property
                  */
                 if (method.getAnnotation(DisableInject.class) != null) {
@@ -693,7 +743,9 @@ public class ExtensionLoader<T> {
                 }
 
                 try {
+                    // setCar,拿到car小写
                     String property = getSetterProperty(method);
+                    // car在SPI文件的对应的实例
                     Object object = objectFactory.getExtension(pt, property);
                     if (object != null) {
                         method.invoke(instance, object);
@@ -751,7 +803,12 @@ public class ExtensionLoader<T> {
         return getExtensionClasses().get(name);
     }
 
+    /**
+     *
+     * @return
+     */
     private Map<String, Class<?>> getExtensionClasses() {
+        // cache,将SPI文件解析成 map
         Map<String, Class<?>> classes = cachedClasses.get();
         if (classes == null) {
             synchronized (cachedClasses) {
@@ -772,7 +829,8 @@ public class ExtensionLoader<T> {
         cacheDefaultExtensionName();
 
         Map<String, Class<?>> extensionClasses = new HashMap<>();
-
+        // 加载的文件目录：META-INF/dubbo/internal META-INF/dubbo META-INF/services
+        // META-INF/services文件优先级最高
         for (LoadingStrategy strategy : strategies) {
             loadDirectory(extensionClasses, strategy.directory(), type.getName(), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());
             loadDirectory(extensionClasses, strategy.directory(), type.getName().replace("org.apache", "com.alibaba"), strategy.preferExtensionClassLoader(), strategy.overridden(), strategy.excludedPackages());
@@ -833,6 +891,7 @@ public class ExtensionLoader<T> {
             if (urls != null) {
                 while (urls.hasMoreElements()) {
                     java.net.URL resourceURL = urls.nextElement();
+                    // 加载
                     loadResource(extensionClasses, classLoader, resourceURL, overridden, excludedPackages);
                 }
             }
@@ -862,6 +921,7 @@ public class ExtensionLoader<T> {
                                 line = line.substring(i + 1).trim();
                             }
                             if (line.length() > 0 && !isExcluded(line, excludedPackages)) {
+                                // Class文件需要初始化
                                 loadClass(extensionClasses, resourceURL, Class.forName(line, true, classLoader), name, overridden);
                             }
                         } catch (Throwable t) {
@@ -890,24 +950,28 @@ public class ExtensionLoader<T> {
 
     private void loadClass(Map<String, Class<?>> extensionClasses, java.net.URL resourceURL, Class<?> clazz, String name,
                            boolean overridden) throws NoSuchMethodException {
+        // clazz实现类是否实现了type
         if (!type.isAssignableFrom(clazz)) {
             throw new IllegalStateException("Error occurred when loading extension class (interface: " +
                     type + ", class line: " + clazz.getName() + "), class "
                     + clazz.getName() + " is not subtype of interface.");
         }
+        // 实现类的注解，实现类是代理类
         if (clazz.isAnnotationPresent(Adaptive.class)) {
             cacheAdaptiveClass(clazz, overridden);
-        } else if (isWrapperClass(clazz)) {
+        } else if (isWrapperClass(clazz)) { // 是否为包装类,可以有多个包装类
             cacheWrapperClass(clazz);
         } else {
             clazz.getConstructor();
-            if (StringUtils.isEmpty(name)) {
+            if (StringUtils.isEmpty(name)) { // null或者空字符串
                 name = findAnnotationName(clazz);
                 if (name.length() == 0) {
                     throw new IllegalStateException("No such extension name for the class " + clazz.getName() + " in the config " + resourceURL);
                 }
             }
 
+            // name对应SPI配置文件，BMW 3, BMW 5, BMW 7=dubbo.spi.BenzImpl
+            // BMW 3, BMW 5 都有效
             String[] names = NAME_SEPARATOR.split(name);
             if (ArrayUtils.isNotEmpty(names)) {
                 cacheActivateClass(clazz, names[0]);
@@ -961,6 +1025,7 @@ public class ExtensionLoader<T> {
     }
 
     /**
+     * 对于一个接口的实现类只能有一个代理类
      * cache Adaptive class which is annotated with <code>Adaptive</code>
      */
     private void cacheAdaptiveClass(Class<?> clazz, boolean overridden) {
@@ -992,6 +1057,12 @@ public class ExtensionLoader<T> {
      */
     private boolean isWrapperClass(Class<?> clazz) {
         try {
+            /**
+             * 约定
+             * public BenzWrapperImpl(IName type){
+             *
+             * }
+             */
             clazz.getConstructor(type);
             return true;
         } catch (NoSuchMethodException e) {
@@ -999,6 +1070,16 @@ public class ExtensionLoader<T> {
         }
     }
 
+    /**
+     * @Extenson("xxx")
+     * public class BenzImpl implements IName{
+     *
+     * }
+     *
+     * 这个方法就是返回 "xxx"
+     * @param clazz
+     * @return
+     */
     @SuppressWarnings("deprecation")
     private String findAnnotationName(Class<?> clazz) {
         org.apache.dubbo.common.Extension extension = clazz.getAnnotation(org.apache.dubbo.common.Extension.class);
@@ -1027,6 +1108,7 @@ public class ExtensionLoader<T> {
         if (cachedAdaptiveClass != null) {
             return cachedAdaptiveClass;
         }
+        // 如果没有手动实现接口的代理类，那么Dubbo就会自动生成className以"$Adaptive"结尾的一个代理类
         return cachedAdaptiveClass = createAdaptiveExtensionClass();
     }
 

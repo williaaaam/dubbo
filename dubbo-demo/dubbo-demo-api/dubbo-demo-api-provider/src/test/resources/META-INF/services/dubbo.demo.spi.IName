@@ -1,0 +1,5 @@
+benz=dubbo.demo.spi.impl.BenzImpl
+audi,q3,q5=dubbo.demo.spi.impl.AudiImpl
+benzIoc=dubbo.demo.spi.impl.BenzIOCImpl
+bmw=dubbo.demo.spi.impl.BMWImpl
+dubbo.demo.spi.impl.BMWImpl

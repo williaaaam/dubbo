@@ -38,6 +38,13 @@ public class JavassistCompiler extends AbstractCompiler {
 
     private static final Pattern FIELD_PATTERN = Pattern.compile("[^\n]+=[^\n]+;");
 
+    /**
+     * 根据模板Java源文件的文件字符串source生成className是<code>name</code>的Class对象
+     * @param name
+     * @param source
+     * @return
+     * @throws Throwable
+     */
     @Override
     public Class<?> doCompile(String name, String source) throws Throwable {
         CtClassBuilder builder = new CtClassBuilder();

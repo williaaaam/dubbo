@@ -40,6 +40,7 @@ public class AdaptiveCompiler implements Compiler {
         if (name != null && name.length() > 0) {
             compiler = loader.getExtension(name);
         } else {
+            // 默认使用 javassist
             compiler = loader.getDefaultExtension();
         }
         return compiler.compile(code, classLoader);

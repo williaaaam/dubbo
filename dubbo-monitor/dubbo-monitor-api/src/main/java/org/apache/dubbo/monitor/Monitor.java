@@ -19,6 +19,7 @@ package org.apache.dubbo.monitor;
 import org.apache.dubbo.common.Node;
 
 /**
+ * 监控
  * Monitor. (SPI, Prototype, ThreadSafe)
  *
  * @see org.apache.dubbo.monitor.MonitorFactory#getMonitor(org.apache.dubbo.common.URL)

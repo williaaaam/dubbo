@@ -24,6 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * 提供偏技术底层的RPC功能
  * Protocol. (API/SPI, Singleton, ThreadSafe)
  */
 @SPI("dubbo")
@@ -45,7 +46,7 @@ public interface Protocol {
      * 3. Invoker instance is passed in by the framework, protocol needs not to care <br>
      *
      * @param <T>     Service type
-     * @param invoker Service invoker
+     * @param invoker Service invoker 调用器 负责方法的执行
      * @return exporter reference for exported service, useful for unexport the service later
      * @throws RpcException thrown when error occurs during export the service, for example: port is occupied
      */

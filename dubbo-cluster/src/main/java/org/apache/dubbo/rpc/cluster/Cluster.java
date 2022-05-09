@@ -25,6 +25,7 @@ import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.cluster.support.FailoverCluster;
 
 /**
+ * 分布式环境下的负载均衡和集群容错机制
  * Cluster. (SPI, Singleton, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Computer_cluster">Cluster</a>
