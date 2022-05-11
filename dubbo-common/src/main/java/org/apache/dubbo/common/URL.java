@@ -62,6 +62,8 @@ import static org.apache.dubbo.common.convert.Converter.convertIfPossible;
 import static org.apache.dubbo.common.utils.StringUtils.isBlank;
 
 /**
+ * 采用 URL 作为配置信息的统一格式，所有扩展点都通过传递 URL 携带配置信息。
+ *
  * URL - Uniform Resource Locator (Immutable, ThreadSafe)
  * <p>
  * url example:

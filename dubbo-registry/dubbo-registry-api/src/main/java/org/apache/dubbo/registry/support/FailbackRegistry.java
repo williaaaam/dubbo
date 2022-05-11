@@ -191,7 +191,11 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         return failedUnsubscribed;
     }
 
-
+    /**
+     * 可以看到 com.alibaba.dubbo.demo.DemoService 这个服务对应的配置信息（存储在 URL 中）最终被注册到了 /dubbo/com.alibaba.dubbo.demo.DemoService/providers/ 节点下
+     * 所谓的注册就是本质上是将服务配置数据写入到 Zookeeper 的某个路径的节点下
+     * @param url
+     */
     @Override
     public void register(URL url) {
         if (!acceptable(url)) {
@@ -203,6 +207,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         removeFailedUnregistered(url);
         try {
             // Sending a registration request to the server side
+            // 模板方法，子类实现
             doRegister(url);
         } catch (Exception e) {
             Throwable t = e;

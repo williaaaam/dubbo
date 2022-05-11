@@ -23,7 +23,8 @@ import org.apache.dubbo.common.extension.SPI;
 import static org.apache.dubbo.rpc.Constants.PROXY_KEY;
 
 /**
- * 实现动态代理的核心接口
+ * 实现动态代理的核心接口,默认JavassistProxyFactory
+ *
  * ProxyFactory. (API/SPI, Singleton, ThreadSafe)
  */
 @SPI("javassist")
@@ -48,12 +49,13 @@ public interface ProxyFactory {
     <T> T getProxy(Invoker<T> invoker, boolean generic) throws RpcException;
 
     /**
+     * 实现实现类到Invoker的转化
      * create invoker.
      *
      * @param <T>
      * @param proxy
      * @param type
-     * @param url
+     * @param url 例如 ServiceConfig 解析出的URL格式，例如有注册中心的配置 registry://registry-host/org.apache.dubbo.registry.RegistryService?export=URL.encode("dubbo://service-host/com.foo.FooService?version=1.0.0")，
      * @return invoker
      */
     @Adaptive({PROXY_KEY})

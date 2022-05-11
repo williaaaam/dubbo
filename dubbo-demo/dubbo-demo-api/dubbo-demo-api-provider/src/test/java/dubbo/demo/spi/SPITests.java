@@ -53,7 +53,7 @@ public class SPITests {
 
         // System.out.println("*****");
         // 实现AOP
-        System.out.println(extensionLoader.getExtension("benz"));s
+        System.out.println(extensionLoader.getExtension("benz"));
 
 
     }

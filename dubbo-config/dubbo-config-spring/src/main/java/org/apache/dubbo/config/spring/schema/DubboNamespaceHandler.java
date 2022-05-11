@@ -42,6 +42,13 @@ import org.w3c.dom.Element;
 import static org.apache.dubbo.config.spring.util.DubboBeanUtils.registerCommonBeans;
 
 /**
+ * 标签解析器，
+ * <p>
+ * Spring通过XML解析程序将其解析为DOM树，通过NamespaceHandler指定对应的Namespace的BeanDefinitionParser将其转换成BeanDefinition。再通过Spring自身的功能对BeanDefinition实例化对象。
+ * <p>
+ * 基于 dubbo.jar 内的 META-INF/spring.handlers 配置，Spring 在遇到 dubbo 名称空间时，会回调 DubboNamespaceHandler。
+ * <p>
+ * 要实现自定义的xml配置，需要有两个默认spring配置文件来支持。一个是spring.schemas,一个是spring.handlers，前者是为了验证你自定义的xml配置文件是否符合你的格式要求，后者是告诉spring该如何来解析你自定义的配置文件。
  * DubboNamespaceHandler
  *
  * @export
@@ -65,7 +72,9 @@ public class DubboNamespaceHandler extends NamespaceHandlerSupport implements Co
         registerBeanDefinitionParser("provider", new DubboBeanDefinitionParser(ProviderConfig.class, true));
         registerBeanDefinitionParser("consumer", new DubboBeanDefinitionParser(ConsumerConfig.class, true));
         registerBeanDefinitionParser("protocol", new DubboBeanDefinitionParser(ProtocolConfig.class, true));
+        // 服务暴露的Bean ServiceBean
         registerBeanDefinitionParser("service", new DubboBeanDefinitionParser(ServiceBean.class, true));
+        // 消费者对应的Bean ReferenceBean
         registerBeanDefinitionParser("reference", new DubboBeanDefinitionParser(ReferenceBean.class, false));
         registerBeanDefinitionParser("annotation", new AnnotationBeanDefinitionParser());
     }

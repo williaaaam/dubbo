@@ -37,6 +37,10 @@ import static org.apache.dubbo.common.constants.CommonConstants.REFERENCE_FILTER
 import static org.apache.dubbo.common.constants.CommonConstants.SERVICE_FILTER_KEY;
 
 /**
+ * 基于扩展点自适应机制，所有的 Protocol 扩展点都会自动套上 Wrapper 类。
+ *
+ * 基于 ProtocolFilterWrapper 类，将所有 Filter 组装成链，在链的最后一节调用真实的引用。
+ *
  * ListenerProtocol
  */
 @Activate(order = 100)
@@ -44,6 +48,10 @@ public class ProtocolFilterWrapper implements Protocol {
 
     private final Protocol protocol;
 
+    /**
+     *
+     * @param protocol
+     */
     public ProtocolFilterWrapper(Protocol protocol) {
         if (protocol == null) {
             throw new IllegalArgumentException("protocol == null");

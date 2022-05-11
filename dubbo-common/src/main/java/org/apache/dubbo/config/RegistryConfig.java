@@ -30,6 +30,7 @@ import static org.apache.dubbo.common.utils.PojoUtils.updatePropertyIfAbsent;
 import static org.apache.dubbo.config.Constants.REGISTRIES_SUFFIX;
 
 /**
+ * <dubbo:registry ></dubbo:registry>
  * RegistryConfig
  *
  * @export

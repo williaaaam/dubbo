@@ -1,0 +1,2 @@
+dubbo.demo.spi.impl.AlibabaOfferImpl
+dubbo.demo.spi.impl.JDOfferImpl

@@ -29,6 +29,10 @@ public class BenzIOCImpl implements IName {
         return iName.get(url);
     }
 
+    /**
+     * 扩展点自动转配
+     * @param iName
+     */
     public void setiName(IName iName) {
         this.iName = iName;
     }

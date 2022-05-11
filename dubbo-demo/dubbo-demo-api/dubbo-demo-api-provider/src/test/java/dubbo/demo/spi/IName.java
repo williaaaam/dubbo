@@ -25,6 +25,11 @@ public interface IName {
         return "路灯下的小女孩";
     }*/
 
+    /**
+     * 扩展点自适应
+     * @param url
+     * @return
+     */
     @Adaptive("nameType")
     String get(URL url);
 }

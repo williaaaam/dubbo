@@ -37,6 +37,8 @@ import static org.apache.dubbo.common.constants.CommonConstants.EXPORTER_LISTENE
 import static org.apache.dubbo.common.constants.CommonConstants.INVOKER_LISTENER_KEY;
 
 /**
+ * 将所有 InvokerListener 和 ExporterListener 组装集合，在暴露和引用前后，进行回调
+ *
  * ListenerProtocol
  */
 @Activate(order = 200)

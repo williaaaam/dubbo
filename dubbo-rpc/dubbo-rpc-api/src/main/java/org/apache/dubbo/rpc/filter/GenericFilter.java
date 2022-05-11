@@ -50,6 +50,14 @@ import static org.apache.dubbo.common.constants.CommonConstants.GENERIC_SERIALIZ
 import static org.apache.dubbo.rpc.Constants.GENERIC_KEY;
 
 /**
+ * 消费者泛化调用的rpc报文传递到提供者还不能直接使用，虽然path是对的，但是实际的方法名，参数类型，参数要从rpc报文的参数中提取出来。
+ *
+ * GenericFilter就是用来做这件事情。
+ *
+ * 在提供者这边，针对泛化调用的逻辑全部封装到了GenericFilter，解耦的非常好。
+ *
+ * 链接：https://www.jianshu.com/p/e3a42571e4d7
+ *
  * GenericInvokerFilter.
  */
 @Activate(group = CommonConstants.PROVIDER, order = -20000)
@@ -60,11 +68,15 @@ public class GenericFilter implements Filter, Filter.Listener {
         if ((inv.getMethodName().equals($INVOKE) || inv.getMethodName().equals($INVOKE_ASYNC))
                 && inv.getArguments() != null
                 && inv.getArguments().length == 3
-                && !GenericService.class.isAssignableFrom(invoker.getInterface())) {
+                && !GenericService.class.isAssignableFrom(invoker.getInterface())) { // interface是实际接口
+            // 方法名
             String name = ((String) inv.getArguments()[0]).trim();
+            // 方法参数类型
             String[] types = (String[]) inv.getArguments()[1];
+            // 方法参数
             Object[] args = (Object[]) inv.getArguments()[2];
             try {
+                // 反射查找目标方法
                 Method method = ReflectUtils.findMethodByMethodSignature(invoker.getInterface(), name, types);
                 Class<?>[] params = method.getParameterTypes();
                 if (args == null) {
@@ -74,12 +86,15 @@ public class GenericFilter implements Filter, Filter.Listener {
                 if (args.length != types.length) {
                     throw new RpcException("args.length != types.length");
                 }
+                // 消费端会把generic=true放到attachment中
                 String generic = inv.getAttachment(GENERIC_KEY);
 
                 if (StringUtils.isBlank(generic)) {
                     generic = RpcContext.getContext().getAttachment(GENERIC_KEY);
                 }
 
+                // 反序列化，为什么还要反序列化呢？
+                // 比如：针对一个实际方法的类型是POJO你传过来是一个Map（泛化调用），从Map转换为POJO需要这边进一步处理
                 if (StringUtils.isEmpty(generic)
                         || ProtocolUtils.isDefaultGenericSerialization(generic)
                         || ProtocolUtils.isGenericReturnRawResult(generic)) {
@@ -140,6 +155,7 @@ public class GenericFilter implements Filter, Filter.Listener {
                     }
                 }
 
+                // 调用目标服务
                 RpcInvocation rpcInvocation = new RpcInvocation(method, invoker.getInterface().getName(), invoker.getUrl().getProtocolServiceKey(), args, inv.getObjectAttachments(), inv.getAttributes());
                 rpcInvocation.setInvoker(inv.getInvoker());
                 rpcInvocation.setTargetServiceUniqueName(inv.getTargetServiceUniqueName());

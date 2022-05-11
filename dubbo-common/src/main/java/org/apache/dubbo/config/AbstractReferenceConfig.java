@@ -42,6 +42,7 @@ public abstract class AbstractReferenceConfig extends AbstractInterfaceConfig {
     protected Boolean check;
 
     /**
+     * 服务引用的时机：饿汉式或者懒汉式（默认懒汉式）
      * Whether to eagle-init
      */
     protected Boolean init;

@@ -51,16 +51,20 @@ public abstract class AbstractServiceConfig extends AbstractInterfaceConfig {
     protected Boolean deprecated = false;
 
     /**
+     * 延迟导出
      * The time delay register service (milliseconds)
      */
     protected Integer delay;
 
     /**
+     * 是否导出服务，有时候我们只是想本地启动服务进行一些调试工作，我们并不希望把本地启动的服务暴露出去给别人调用。此时，我们可通过配置 export 禁止服务导出，
+     * <dubbo:provider export="false"></dubbo:provider>
      * Whether to export the service
      */
     protected Boolean export;
 
     /**
+     * 权重
      * The service weight
      */
     protected Integer weight;

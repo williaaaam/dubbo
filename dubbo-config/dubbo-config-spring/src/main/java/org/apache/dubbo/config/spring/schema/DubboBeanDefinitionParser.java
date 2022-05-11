@@ -57,6 +57,7 @@ import java.util.regex.Pattern;
 import static org.apache.dubbo.common.constants.CommonConstants.HIDE_KEY_PREFIX;
 
 /**
+ * dubbo标签解析器,基于一对一属性映射，将 XML 标签解析为 Bean 对象
  * AbstractBeanDefinitionParser
  *
  * @export
@@ -69,6 +70,7 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
     private static final String ONTHROW = "onthrow";
     private static final String ONINVOKE = "oninvoke";
     private static final String METHOD = "Method";
+    // dubbo标签对应的Class对象
     private final Class<?> beanClass;
     private final boolean required;
 
@@ -77,6 +79,16 @@ public class DubboBeanDefinitionParser implements BeanDefinitionParser {
         this.required = required;
     }
 
+    /**
+     * 将标签解析为RootBeanDefinition
+     * <p>
+     *
+     * @param element
+     * @param parserContext
+     * @param beanClass
+     * @param required
+     * @return
+     */
     @SuppressWarnings("unchecked")
     private static RootBeanDefinition parse(Element element, ParserContext parserContext, Class<?> beanClass, boolean required) {
         RootBeanDefinition beanDefinition = new RootBeanDefinition();

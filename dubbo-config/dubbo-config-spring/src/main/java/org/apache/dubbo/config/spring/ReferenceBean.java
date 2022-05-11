@@ -39,7 +39,7 @@ import org.springframework.context.ApplicationContextAware;
 
 import static org.springframework.beans.factory.BeanFactoryUtils.beansOfTypeIncludingAncestors;
 
-/**
+/**S
  * ReferenceFactoryBean
  */
 public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean,
@@ -63,6 +63,10 @@ public class ReferenceBean<T> extends ReferenceConfig<T> implements FactoryBean,
         SpringExtensionFactory.addApplicationContext(applicationContext);
     }
 
+    /**
+     * 懒汉式获取服务引用，默认是吸纳
+     * @return
+     */
     @Override
     public Object getObject() {
         return get();

@@ -26,6 +26,8 @@ import org.apache.dubbo.rpc.cluster.support.FailoverCluster;
 
 /**
  * 分布式环境下的负载均衡和集群容错机制
+ * Cluster目的是将多个Invoker伪装成一个Invoker，只有一个Invoker是不需要Cluster的
+ *
  * Cluster. (SPI, Singleton, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Computer_cluster">Cluster</a>

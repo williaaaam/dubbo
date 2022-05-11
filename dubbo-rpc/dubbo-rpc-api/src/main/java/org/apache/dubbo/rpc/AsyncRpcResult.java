@@ -155,6 +155,7 @@ public class AsyncRpcResult implements Result {
     }
 
     /**
+     * 阻塞获取值
      * This method will always return after a maximum 'timeout' waiting:
      * 1. if value returns before timeout, return normally.
      * 2. if no value returns after timeout, throw TimeoutException.

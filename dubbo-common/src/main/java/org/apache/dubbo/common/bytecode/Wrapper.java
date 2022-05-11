@@ -98,6 +98,9 @@ public abstract class Wrapper {
     private static AtomicLong WRAPPER_CLASS_COUNTER = new AtomicLong(0);
 
     /**
+     * 仅可通过 getWrapper(Class) 方法创建子类。在创建 Wrapper 子类的过程中，子类代码生成逻辑会对 getWrapper 方法传入的 Class 对象进行解析，
+     * 拿到诸如类方法，类成员变量等信息。以及生成 invokeMethod 方法代码和其他一些方法代码。代码生成完毕后，
+     * 通过 Javassist 生成 Class 对象，最后再通过反射创建 Wrapper 实例
      * get wrapper.
      *
      * @param c Class instance.
@@ -116,7 +119,14 @@ public abstract class Wrapper {
         return WRAPPER_MAP.computeIfAbsent(c, Wrapper::makeWrapper);
     }
 
+    /**
+     * 缓存未命中，创建Wrapper；通过 Javassist 生成 Class 对象，最后再通过反射创建 Wrapper 实例
+     * <p>
+     * @param c
+     * @return
+     */
     private static Wrapper makeWrapper(Class<?> c) {
+        // 如果是基本类型，直接报错
         if (c.isPrimitive()) {
             throw new IllegalArgumentException("Can not create wrapper for primitive type: " + c);
         }
@@ -124,17 +134,25 @@ public abstract class Wrapper {
         String name = c.getName();
         ClassLoader cl = ClassUtils.getClassLoader(c);
 
+        // c1 用于存储 setPropertyValue 方法代码
         StringBuilder c1 = new StringBuilder("public void setPropertyValue(Object o, String n, Object v){ ");
+        // c2 用于存储 getPropertyValue 方法代码
         StringBuilder c2 = new StringBuilder("public Object getPropertyValue(Object o, String n){ ");
+        // c3 用于存储 invokeMethod 方法代码
         StringBuilder c3 = new StringBuilder("public Object invokeMethod(Object o, String n, Class[] p, Object[] v) throws " + InvocationTargetException.class.getName() + "{ ");
-
+        // 生成类型转换代码及异常捕捉代码，比如：
+        //   DemoService w; try { w = ((DemoServcie) $1); }}catch(Throwable e){ throw new IllegalArgumentException(e); }
         c1.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
         c2.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
         c3.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
 
+        // pts 用于存储成员变量名和类型
         Map<String, Class<?>> pts = new HashMap<>(); // <property name, property types>
+        // ms 用于存储方法描述信息（可理解为方法签名）及 Method 实例
         Map<String, Method> ms = new LinkedHashMap<>(); // <method desc, Method instance>
+        // 方法名称
         List<String> mns = new ArrayList<>(); // method names.
+        // dmns 用于存储“定义在当前类中的方法”的名称
         List<String> dmns = new ArrayList<>(); // declaring method names.
 
         // get all public field.
@@ -230,6 +248,7 @@ public abstract class Wrapper {
 
         // make class
         long id = WRAPPER_CLASS_COUNTER.getAndIncrement();
+        // 这段代码通过 ClassGenerator 为刚刚生成的代码构建 Class 类,斌反射创建对象
         ClassGenerator cc = ClassGenerator.newInstance(cl);
         cc.setClassName((Modifier.isPublic(c.getModifiers()) ? Wrapper.class.getName() : c.getName() + "$sw") + id);
         cc.setSuperClass(Wrapper.class);
@@ -243,6 +262,7 @@ public abstract class Wrapper {
             cc.addField("public static Class[] mts" + i + ";");
         }
 
+        // 添加方法代码
         cc.addMethod("public String[] getPropertyNames(){ return pns; }");
         cc.addMethod("public boolean hasProperty(String n){ return pts.containsKey($1); }");
         cc.addMethod("public Class getPropertyType(String n){ return (Class)pts.get($1); }");
@@ -253,7 +273,9 @@ public abstract class Wrapper {
         cc.addMethod(c3.toString());
 
         try {
+            // 生成类
             Class<?> wc = cc.toClass();
+            // 设置静态字段值
             // setup static field.
             wc.getField("pts").set(null, pts);
             wc.getField("pns").set(null, pts.keySet().toArray(new String[0]));
@@ -263,6 +285,7 @@ public abstract class Wrapper {
             for (Method m : ms.values()) {
                 wc.getField("mts" + ix++).set(null, m.getParameterTypes());
             }
+            // 反射创建Wrapper实例
             return (Wrapper) wc.newInstance();
         } catch (RuntimeException e) {
             throw e;

@@ -14,6 +14,10 @@ public class BenzWrapperImpl implements IName {
 
     private IName iName;
 
+    /**
+     * 扩展点自动包装,类似AOP
+     * @param name
+     */
     public BenzWrapperImpl(IName name) {
         this.iName = name;
     }

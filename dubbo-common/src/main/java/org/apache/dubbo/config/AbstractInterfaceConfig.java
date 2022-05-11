@@ -121,6 +121,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     protected List<RegistryConfig> registries;
 
     /**
+     * methods 为 MethodConfig 集合，MethodConfig 中存储了 <dubbo:method> 标签的配置信息
      * The method configuration
      */
     private List<MethodConfig> methods;
@@ -187,6 +188,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
             }
         }
     }
+
 
     public static void appendRuntimeParameters(Map<String, String> map) {
         map.put(DUBBO_VERSION_KEY, Version.getProtocolVersion());

@@ -43,11 +43,13 @@ public abstract class ReferenceConfigBase<T> extends AbstractReferenceConfig {
     private static final long serialVersionUID = -5864351140409987595L;
 
     /**
+     * 指定发送rpc报文中的path
      * The interface name of the reference service
      */
     protected String interfaceName;
 
     /**
+     * 生成代理的接口
      * The interface class of the reference service
      */
     protected Class<?> interfaceClass;
@@ -135,7 +137,7 @@ public abstract class ReferenceConfigBase<T> extends AbstractReferenceConfig {
         if (interfaceClass != null) {
             return interfaceClass;
         }
-        if (ProtocolUtils.isGeneric(getGeneric())
+        if (ProtocolUtils.isGeneric(getGeneric()) // 如果是泛化调用
                 || (getConsumer() != null && ProtocolUtils.isGeneric(getConsumer().getGeneric()))) {
             return GenericService.class;
         }

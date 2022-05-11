@@ -24,6 +24,7 @@ import org.apache.dubbo.remoting.Constants;
 @SPI("curator")
 public interface ZookeeperTransporter {
 
+    // 这里的 zookeeperTransporter 类型为自适应拓展类，因此 connect 方法会在被调用时决定加载什么类型的 ZookeeperTransporter 拓展，默认为 CuratorZookeeperTransporter
     @Adaptive({Constants.CLIENT_KEY, Constants.TRANSPORTER_KEY})
     ZookeeperClient connect(URL url);
 

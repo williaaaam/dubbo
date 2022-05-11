@@ -20,6 +20,7 @@ import org.apache.dubbo.common.Node;
 import org.apache.dubbo.common.URL;
 
 /**
+ * 注册中心层扩展接口
  * Registry. (SPI, Prototype, ThreadSafe)
  *
  * @see org.apache.dubbo.registry.RegistryFactory#getRegistry(URL)

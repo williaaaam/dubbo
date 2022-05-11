@@ -286,6 +286,7 @@ public final class ClassGenerator {
                 getClass().getProtectionDomain());
     }
 
+    // 核心方法,通过javassit构建Class
     public Class<?> toClass(ClassLoader loader, ProtectionDomain pd) {
         if (mCtc != null) {
             mCtc.detach();

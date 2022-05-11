@@ -33,6 +33,8 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 
 /**
+ * ServiceBean可以看作是Dubbo与Spring框架进行整合的桥梁，类似还有ReferenceBean
+ * <p>
  * ServiceFactoryBean
  *
  * @export
@@ -116,6 +118,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
      */
     private void publishExportEvent() {
         ServiceBeanExportedEvent exportEvent = new ServiceBeanExportedEvent(this);
+        // 发布-订阅模式，发布事件交给事件多播器管理
         applicationEventPublisher.publishEvent(exportEvent);
     }
 

@@ -54,6 +54,7 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
     protected Class<?> interfaceClass;
 
     /**
+     * 对外提供服务的实现类
      * The reference of the interface implementation
      */
     protected T ref;
@@ -159,6 +160,10 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
         return (export == null && provider != null) ? provider.getExport() : export;
     }
 
+    /**
+     * 是否延迟导出
+     * @return
+     */
     public boolean shouldDelay() {
         Integer delay = getDelay();
         return delay != null && delay > 0;
@@ -431,12 +436,23 @@ public abstract class ServiceConfigBase<T> extends AbstractServiceConfig {
         }
     }
 
+    /**
+     * 服务导出
+     */
     public abstract void export();
 
     public abstract void unexport();
 
+    /**
+     * 是否已经导出
+     * @return
+     */
     public abstract boolean isExported();
 
+    /**
+     * 是否已经取消导出
+     * @return
+     */
     public abstract boolean isUnexported();
 
 }

@@ -1,0 +1,4 @@
+jd=dubbo.demo.spi.impl.JDOrderImpl
+tmall=dubbo.demo.spi.impl.TmallOrderImpl
+pdd=dubbo.demo.spi.impl.PDDOrderImpl
+dubbo.demo.spi.impl.PDDAOPOrderImpl

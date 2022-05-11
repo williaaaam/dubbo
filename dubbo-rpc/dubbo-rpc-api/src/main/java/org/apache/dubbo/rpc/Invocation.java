@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 /**
+ * Invocation 是会话域，它持有调用过程中的变量，比如方法名，参数等。
+ * <p></p>
  * Invocation. (API, Prototype, NonThreadSafe)
  *
  * @serial Don't change the class name and package name.
