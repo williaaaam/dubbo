@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
+ * 加权随机算法
+ *
  * This class select one provider from multiple providers randomly.
  * You can define weights for each provider:
  * If the weights are all the same then it will use random.nextInt(number of invokers).
@@ -52,6 +54,7 @@ public class RandomLoadBalance extends AbstractLoadBalance {
         // the weight of every invokers
         int[] weights = new int[length];
         // the first invoker's weight
+        // 预热后的权重
         int firstWeight = getWeight(invokers.get(0), invocation);
         weights[0] = firstWeight;
         // The sum of weights
@@ -66,7 +69,8 @@ public class RandomLoadBalance extends AbstractLoadBalance {
                 sameWeight = false;
             }
         }
-        if (totalWeight > 0 && !sameWeight) {
+
+        if (totalWeight > 0 && !sameWeight) { // 总权重>0,并且每个Invoker权重不相等 加权随机
             // If (not every invoker has the same weight & at least one invoker's weight>0), select randomly based on totalWeight.
             int offset = ThreadLocalRandom.current().nextInt(totalWeight);
             // Return a invoker based on the random value.
@@ -77,6 +81,8 @@ public class RandomLoadBalance extends AbstractLoadBalance {
                 }
             }
         }
+
+        // 随机调用
         // If all invokers have the same weight value or totalWeight=0, return evenly.
         return invokers.get(ThreadLocalRandom.current().nextInt(length));
     }

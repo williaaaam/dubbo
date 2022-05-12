@@ -30,6 +30,7 @@ import java.util.concurrent.ConcurrentMap;
 import static org.apache.dubbo.common.constants.CommonConstants.COMMA_SPLIT_PATTERN;
 
 /**
+ * 一致性哈希算法
  * ConsistentHashLoadBalance
  */
 public class ConsistentHashLoadBalance extends AbstractLoadBalance {
@@ -45,6 +46,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
      */
     public static final String HASH_ARGUMENTS = "hash.arguments";
 
+    // 接口名.方法名 和 一致性hash环
     private final ConcurrentMap<String, ConsistentHashSelector<?>> selectors = new ConcurrentHashMap<String, ConsistentHashSelector<?>>();
 
     @SuppressWarnings("unchecked")
@@ -53,6 +55,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         String methodName = RpcUtils.getMethodName(invocation);
         String key = invokers.get(0).getUrl().getServiceKey() + "." + methodName;
         // using the hashcode of list to compute the hash only pay attention to the elements in the list
+        // 获取invokers的hashcode
         int invokersHashCode = invokers.hashCode();
         ConsistentHashSelector<T> selector = (ConsistentHashSelector<T>) selectors.get(key);
         if (selector == null || selector.identityHashCode != invokersHashCode) {
@@ -63,7 +66,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
     }
 
     private static final class ConsistentHashSelector<T> {
-
+        // TreeMap实现哈希环
         private final TreeMap<Long, Invoker<T>> virtualInvokers;
 
         private final int replicaNumber;
@@ -73,9 +76,11 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         private final int[] argumentIndex;
 
         ConsistentHashSelector(List<Invoker<T>> invokers, String methodName, int identityHashCode) {
+            // 虚拟节点
             this.virtualInvokers = new TreeMap<Long, Invoker<T>>();
             this.identityHashCode = identityHashCode;
             URL url = invokers.get(0).getUrl();
+            // 默认每个Invoker 160个虚拟节点
             this.replicaNumber = url.getMethodParameter(methodName, HASH_NODES, 160);
             String[] index = COMMA_SPLIT_PATTERN.split(url.getMethodParameter(methodName, HASH_ARGUMENTS, "0"));
             argumentIndex = new int[index.length];
@@ -84,6 +89,9 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
             }
             for (Invoker<T> invoker : invokers) {
                 String address = invoker.getUrl().getAddress();
+                // 40 * 4
+                // address = host:port
+                // key = hash(address+i,1),hash(address+i,2),hash(address+i,3),hash(address+i,4)
                 for (int i = 0; i < replicaNumber / 4; i++) {
                     byte[] digest = Bytes.getMD5(address + i);
                     for (int h = 0; h < 4; h++) {
@@ -95,6 +103,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         }
 
         public Invoker<T> select(Invocation invocation) {
+            // 查找key按照 方法参数 md5
             String key = toKey(invocation.getArguments());
             byte[] digest = Bytes.getMD5(key);
             return selectForKey(hash(digest, 0));
@@ -111,12 +120,15 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         }
 
         private Invoker<T> selectForKey(long hash) {
+            // treeMap中查找第一个节点值大于等于当前hash的Invoker
             Map.Entry<Long, Invoker<T>> entry = virtualInvokers.ceilingEntry(hash);
             if (entry == null) {
+                // TreeMap第一个节点赋值给entry
                 entry = virtualInvokers.firstEntry();
             }
             return entry.getValue();
         }
+
 
         private long hash(byte[] digest, int number) {
             return (((long) (digest[3 + number * 4] & 0xFF) << 24)

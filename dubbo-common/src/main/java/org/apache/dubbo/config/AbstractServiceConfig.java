@@ -64,7 +64,7 @@ public abstract class AbstractServiceConfig extends AbstractInterfaceConfig {
     protected Boolean export;
 
     /**
-     * 权重
+     * 服务权重
      * The service weight
      */
     protected Integer weight;

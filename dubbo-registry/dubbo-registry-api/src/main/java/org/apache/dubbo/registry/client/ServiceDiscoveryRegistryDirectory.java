@@ -283,6 +283,7 @@ public class ServiceDiscoveryRegistryDirectory<T> extends DynamicDirectory<T> im
         }
         super.destroy(); // must be executed after unsubscribing
         try {
+            // 清空本地缓存
             destroyAllInvokers();
         } catch (Throwable t) {
             logger.warn("Failed to destroy service " + serviceKey, t);

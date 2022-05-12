@@ -41,7 +41,7 @@ import static org.apache.dubbo.rpc.Constants.ACTIVES_KEY;
  *
  * @see Filter
  */
-@Activate(group = CONSUMER, value = ACTIVES_KEY)
+@Activate(group = CONSUMER, value = ACTIVES_KEY) // filter作用域客户端
 public class ActiveLimitFilter implements Filter, Filter.Listener {
 
     private static final String ACTIVELIMIT_FILTER_START_TIME = "activelimit_filter_start_time";
@@ -52,7 +52,7 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
         String methodName = invocation.getMethodName();
         int max = invoker.getUrl().getMethodParameter(methodName, ACTIVES_KEY, 0);
         final RpcStatus rpcStatus = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName());
-        if (!RpcStatus.beginCount(url, methodName, max)) {
+        if (!RpcStatus.beginCount(url, methodName, max)) { // 调用方法之前+1
             long timeout = invoker.getUrl().getMethodParameter(invocation.getMethodName(), TIMEOUT_KEY, 0);
             long start = System.currentTimeMillis();
             long remain = timeout;
@@ -81,6 +81,12 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
         return invoker.invoke(invocation);
     }
 
+    /**
+     * 调用结果正常返回 active-1
+     * @param appResponse
+     * @param invoker
+     * @param invocation
+     */
     @Override
     public void onResponse(Result appResponse, Invoker<?> invoker, Invocation invocation) {
         String methodName = invocation.getMethodName();
@@ -91,6 +97,12 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
         notifyFinish(RpcStatus.getStatus(url, methodName), max);
     }
 
+    /**
+     * 调用异常 active -1
+     * @param t
+     * @param invoker
+     * @param invocation
+     */
     @Override
     public void onError(Throwable t, Invoker<?> invoker, Invocation invocation) {
         String methodName = invocation.getMethodName();

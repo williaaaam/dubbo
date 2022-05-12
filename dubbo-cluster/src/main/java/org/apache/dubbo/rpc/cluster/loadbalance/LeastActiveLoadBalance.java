@@ -25,6 +25,8 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
+ * 最小活跃数
+ *
  * LeastActiveLoadBalance
  * <p>
  * Filter the number of invokers with the least number of active calls and count the weights and quantities of these invokers.
@@ -41,6 +43,7 @@ public class LeastActiveLoadBalance extends AbstractLoadBalance {
         // Number of invokers
         int length = invokers.size();
         // The least active value of all invokers
+        // 临时变量，循环中最小活跃值
         int leastActive = -1;
         // The number of invokers having the same least active value (leastActive)
         int leastCount = 0;
@@ -60,8 +63,11 @@ public class LeastActiveLoadBalance extends AbstractLoadBalance {
         for (int i = 0; i < length; i++) {
             Invoker<T> invoker = invokers.get(i);
             // Get the active number of the invoker
+            // 如果Provider hold住了（比如服务端有sleep），那么active = 0
             int active = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName()).getActive();
             // Get the weight of the invoker's configuration. The default value is 100.
+            // 默认权重为100
+            // 预热权重
             int afterWarmup = getWeight(invoker, invocation);
             // save for later use
             weights[i] = afterWarmup;
@@ -91,24 +97,31 @@ public class LeastActiveLoadBalance extends AbstractLoadBalance {
                 }
             }
         }
+        // 如果只有一个invoker活跃数最小，则返回
         // Choose an invoker from all the least active invokers
         if (leastCount == 1) {
             // If we got exactly one invoker having the least active value, return this invoker directly.
             return invokers.get(leastIndexes[0]);
         }
-        if (!sameWeight && totalWeight > 0) {
+
+        if (!sameWeight && totalWeight > 0) { // 活跃数相同，但invoker权重不同,根据权重随机选择
             // If (not every invoker has the same weight & at least one invoker's weight>0), select randomly based on 
             // totalWeight.
+            // 权重不同，根据总权重进行随机
+            // 取值范围 [0,totalWeight)
             int offsetWeight = ThreadLocalRandom.current().nextInt(totalWeight);
             // Return a invoker based on the random value.
             for (int i = 0; i < leastCount; i++) {
                 int leastIndex = leastIndexes[i];
                 offsetWeight -= weights[leastIndex];
                 if (offsetWeight < 0) {
+                    // 确定请求落在哪个区间
                     return invokers.get(leastIndex);
                 }
             }
         }
+
+        // 权重相同，或者总权重为0，则随机选择执行
         // If all invokers have the same weight value or totalWeight=0, return evenly.
         return invokers.get(leastIndexes[ThreadLocalRandom.current().nextInt(leastCount)]);
     }

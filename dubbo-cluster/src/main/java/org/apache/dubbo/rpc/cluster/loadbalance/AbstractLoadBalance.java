@@ -33,6 +33,7 @@ import static org.apache.dubbo.rpc.cluster.Constants.WARMUP_KEY;
 import static org.apache.dubbo.rpc.cluster.Constants.WEIGHT_KEY;
 
 /**
+ * 源码分析参考：https://xie.infoq.cn/article/886ee91ff87cf74bed1677d1b
  * AbstractLoadBalance
  */
 public abstract class AbstractLoadBalance implements LoadBalance {
@@ -43,9 +44,10 @@ public abstract class AbstractLoadBalance implements LoadBalance {
      * @param uptime the uptime in milliseconds
      * @param warmup the warmup time in milliseconds
      * @param weight the weight of an invoker
-     * @return weight which takes warmup into account
+     * @return weight which takes warmup into account 取值范围1-weight
      */
     static int calculateWarmupWeight(int uptime, int warmup, int weight) {
+        // 上线时间 * 权重 / 预热时间(ms)
         int ww = (int) ( uptime / ((float) warmup / weight));
         return ww < 1 ? 1 : (Math.min(ww, weight));
     }
@@ -76,19 +78,29 @@ public abstract class AbstractLoadBalance implements LoadBalance {
         int weight;
         URL url = invoker.getUrl();
         // Multiple registry scenario, load balance among multiple registries.
-        if (REGISTRY_SERVICE_REFERENCE_PATH.equals(url.getServiceInterface())) {
+        if (REGISTRY_SERVICE_REFERENCE_PATH.equals(url.getServiceInterface())) { // 多注册中心
             weight = url.getParameter(REGISTRY_KEY + "." + WEIGHT_KEY, DEFAULT_WEIGHT);
         } else {
+            // 获URL上的权重,默认100
             weight = url.getMethodParameter(invocation.getMethodName(), WEIGHT_KEY, DEFAULT_WEIGHT);
             if (weight > 0) {
                 long timestamp = invoker.getUrl().getParameter(TIMESTAMP_KEY, 0L);
                 if (timestamp > 0L) {
+                    // 当前服务上线时间
                     long uptime = System.currentTimeMillis() - timestamp;
                     if (uptime < 0) {
                         return 1;
                     }
+                    // 默认预热10分钟
+                    /**
+                     * 权重的计算过程主要用于保证当服务运行时长小于服务预热时间时，对服务进行降权，避免让服务在启动之初就处于高负载状态。
+                     * 服务预热是一个优化手段，与此类似的还有 JVM 预热。主要目的是让服务启动后“低功率”运行一段时间，使其效率慢慢提升至最佳状态。
+                     */
                     int warmup = invoker.getUrl().getParameter(WARMUP_KEY, DEFAULT_WARMUP);
-                    if (uptime > 0 && uptime < warmup) {
+                    // 启动时间 小于 预热时间
+                    if (uptime > 0 && uptime < warmup) { // 服务过了预热器后，逐渐增加权重
+                        // 返回值范围 1 ~ weight
+                        // 计算后的权重 = (uptime/warmup) * weight
                         weight = calculateWarmupWeight((int)uptime, warmup, weight);
                     }
                 }

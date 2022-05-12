@@ -258,6 +258,7 @@ public class DubboProtocol extends AbstractProtocol {
                 (String) inv.getObjectAttachments().get(VERSION_KEY),
                 (String) inv.getObjectAttachments().get(GROUP_KEY)
         );
+        // 根据serviceKey得到exporter
         DubboExporter<?> exporter = (DubboExporter<?>) exporterMap.get(serviceKey);
 
         if (exporter == null) {

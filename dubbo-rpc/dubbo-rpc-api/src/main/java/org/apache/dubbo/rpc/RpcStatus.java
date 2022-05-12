@@ -263,6 +263,7 @@ public class RpcStatus {
     }
 
     /**
+     * 总的请求时间减去请求失败的总时间 = 请求成功的总耗时
      * get succeeded elapsed.
      *
      * @return succeeded elapsed
@@ -272,11 +273,13 @@ public class RpcStatus {
     }
 
     /**
+     * 调用成功的请求数总数对应的总耗时 / 调用成功的请求数总数 = 成功调用的平均时间
      * get succeeded average elapsed.
      *
      * @return succeeded average elapsed
      */
     public long getSucceededAverageElapsed() {
+        // 调用成功的请求总数 =  总请求数 - 请求失败
         long succeeded = getSucceeded();
         if (succeeded == 0) {
             return 0;
