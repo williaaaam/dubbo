@@ -85,7 +85,9 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
     protected volatile List<Configurator> configurators; // The initial value is null and the midway may be assigned to null, please use the local variable reference
 
     // Map<url, Invoker> cache service url to invoker mapping.
+    // 保存服务提供者URL和Invoker
     protected volatile Map<URL, Invoker<T>> urlInvokerMap; // The initial value is null and the midway may be assigned to null, please use the local variable reference
+    //
     protected volatile List<Invoker<T>> invokers;
 
     // Set<invokerUrls> cache invokeUrls to invokers mapping.
@@ -111,6 +113,10 @@ public abstract class DynamicDirectory<T> extends AbstractDirectory<T> implement
         this.multiGroup = group != null && (ANY_VALUE.equals(group) || group.contains(","));
     }
 
+    /**
+     *
+     * @param instanceListener
+     */
     @Override
     public void addServiceListener(ServiceInstancesChangedListener instanceListener) {
         this.serviceListener = instanceListener;

@@ -79,6 +79,11 @@ import static org.apache.dubbo.rpc.cluster.Constants.ROUTER_KEY;
 
 
 /**
+ * RegistryDirectory 一共有三大作用：
+ *
+ * 1. 获取 invoker 列表
+ * 2. 监听注册中心的变化
+ * 3. 刷新invokers
  * RegistryDirectory
  */
 public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyListener {
@@ -97,6 +102,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
 //        overrideConsumerUrl();
         CONSUMER_CONFIGURATION_LISTENER.addNotifyListener(this);
         referenceConfigurationListener = new ReferenceConfigurationListener(this, url);
+        // 监听注册中心的变化
         registry.subscribe(url, this);
     }
 
@@ -140,17 +146,24 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
         }
     }
 
+    /**
+     * 监听注册中心的变化
+     *
+     * @param urls The list of registered information , is always not empty. The meaning is the same as the return value of {@link org.apache.dubbo.registry.RegistryService#lookup(URL)}.
+     */
     @Override
     public synchronized void notify(List<URL> urls) {
+        // 根据category进行分类：configurators， routers, providers
         Map<String, List<URL>> categoryUrls = urls.stream()
                 .filter(Objects::nonNull)
                 .filter(this::isValidCategory)
                 .filter(this::isNotCompatibleFor26x)
                 .collect(Collectors.groupingBy(this::judgeCategory));
-
+        // configurators
         List<URL> configuratorURLs = categoryUrls.getOrDefault(CONFIGURATORS_CATEGORY, Collections.emptyList());
         this.configurators = Configurator.toConfigurators(configuratorURLs).orElse(this.configurators);
 
+        // routers
         List<URL> routerURLs = categoryUrls.getOrDefault(ROUTERS_CATEGORY, Collections.emptyList());
         toRouters(routerURLs).ifPresent(this::addRouters);
 
@@ -166,6 +179,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
                 providerURLs = addressListener.notify(providerURLs, getConsumerUrl(),this);
             }
         }
+        // 根据配置更新invokers
         refreshOverrideAndInvoker(providerURLs);
     }
 
@@ -187,6 +201,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
     }
 
     /**
+     * 更新urlInvokerMap
      * Convert the invokerURL list to the Invoker Map. The rules of the conversion are as follows:
      * <ol>
      * <li> If URL has been converted to invoker, it is no longer re-referenced and obtained directly from the cache,
@@ -247,6 +262,7 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
             this.urlInvokerMap = newUrlInvokerMap;
 
             try {
+                // 关闭不用的invokers
                 destroyUnusedInvokers(oldUrlInvokerMap, newUrlInvokerMap); // Close the unused Invoker
             } catch (Exception e) {
                 logger.warn("destroyUnusedInvokers error. ", e);
@@ -500,6 +516,11 @@ public class RegistryDirectory<T> extends DynamicDirectory<T> implements NotifyL
         }
     }
 
+    /**
+     * 获取Invokers列表
+     * @param invocation
+     * @return
+     */
     @Override
     public List<Invoker<T>> doList(Invocation invocation) {
         if (forbidden) {

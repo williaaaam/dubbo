@@ -21,6 +21,7 @@ import org.apache.dubbo.rpc.cluster.Directory;
 import org.apache.dubbo.rpc.cluster.support.wrapper.AbstractCluster;
 
 /**
+ * cluster 实现的是失败自动切换功能，简单的说一个远程调用失败，它就立马换另一个，当然是有重试次数的
  * {@link FailoverClusterInvoker}
  *
  */

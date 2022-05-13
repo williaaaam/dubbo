@@ -29,6 +29,13 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * 多注册中心
+ *
+ * 可以简单的理解成在单注册中心下我们配置的一条 reference 可能对应有多个 provider，然后生成多个 invoker，我们将它们存入 RegistryDirectory 中进行管理，为了便于调用再对外只暴露出一个 invoker 来封装内部的多 invoker 情况。
+ *
+ * 那多个注册中心就会有多个已经封装好了的 invoker ，这又面临了选择了，于是我们用 StaticDirectory 再来存入这些 invoker 进行管理，也再封装起来对外只暴露出一个 invoker 便于调用。
+ * ————————————————
+ * 原文链接：https://blog.csdn.net/qq_35190492/article/details/108778077
  * StaticDirectory
  */
 public class StaticDirectory<T> extends AbstractDirectory<T> {
@@ -36,6 +43,10 @@ public class StaticDirectory<T> extends AbstractDirectory<T> {
 
     private final List<Invoker<T>> invokers;
 
+    /**
+     * 所有 Invoker 是通过构造器来传入
+     * @param invokers
+     */
     public StaticDirectory(List<Invoker<T>> invokers) {
         this(null, invokers, null);
     }
@@ -97,6 +108,12 @@ public class StaticDirectory<T> extends AbstractDirectory<T> {
         this.setRouterChain(routerChain);
     }
 
+    /**
+     *
+     * @param invocation
+     * @return
+     * @throws RpcException
+     */
     @Override
     protected List<Invoker<T>> doList(Invocation invocation) throws RpcException {
         List<Invoker<T>> finalInvokers = invokers;

@@ -49,7 +49,8 @@ import static org.apache.dubbo.rpc.cluster.Constants.RULE_KEY;
 import static org.apache.dubbo.rpc.cluster.Constants.RUNTIME_KEY;
 
 /**
- * ConditionRouter
+ * 条件路由
+ * ConditionRouters
  *
  */
 public class ConditionRouter extends AbstractRouter {

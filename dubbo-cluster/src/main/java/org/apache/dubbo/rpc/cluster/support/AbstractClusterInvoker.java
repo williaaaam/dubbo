@@ -119,6 +119,8 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
     }
 
     /**
+     * select 实际上还进行了粘性处理，也就是会记录上一次选择的 invoker ，这样使得每次调用不会一直换invoker，
+     * 如果上一次没有 invoker，或者上一次的 invoker 下线了则会进行负载均衡选择
      * Select a invoker using loadbalance policy.</br>
      * a) Firstly, select an invoker using loadbalance. If this invoker is in previously selected list, or,
      * if this invoker is unavailable, then continue step b (reselect), otherwise return the first selected invoker</br>
@@ -142,6 +144,7 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
         }
         String methodName = invocation == null ? StringUtils.EMPTY_STRING : invocation.getMethodName();
 
+        // 默认false
         boolean sticky = invokers.get(0).getUrl()
                 .getMethodParameter(methodName, CLUSTER_STICKY_KEY, DEFAULT_CLUSTER_STICKY);
 
@@ -149,13 +152,15 @@ public abstract class AbstractClusterInvoker<T> implements ClusterInvoker<T> {
         if (stickyInvoker != null && !invokers.contains(stickyInvoker)) {
             stickyInvoker = null;
         }
-        //ignore concurrency problem
+        // 粘性处理
+        // ignore concurrency problem
         if (sticky && stickyInvoker != null && (selected == null || !selected.contains(stickyInvoker))) {
-            if (availablecheck && stickyInvoker.isAvailable()) {
+            if (availablecheck && stickyInvoker.isAvailable()) { // 服务未下线
                 return stickyInvoker;
             }
         }
 
+        // 重新进行负载均衡选择
         Invoker<T> invoker = doSelect(loadbalance, invocation, invokers, selected);
 
         if (sticky) {

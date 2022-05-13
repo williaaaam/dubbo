@@ -27,12 +27,17 @@ import org.apache.dubbo.rpc.cluster.support.FailoverCluster;
 /**
  * 分布式环境下的负载均衡和集群容错机制
  * Cluster目的是将多个Invoker伪装成一个Invoker，只有一个Invoker是不需要Cluster的
- *
+ * <p>
+ * 作用：有服务目录，并且目录还经过了路由规则的过滤，此时我们手上还是有一堆 invokers，那对于消费者来说就需要进行抉择，那到底选哪个 invoker 进行调用呢？
+ * <p>
+ * 假设选择的那个 invoker 调用出错了怎么办？前面我们已经提到了，这时候就是 cluster 登场的时候了，它会把这一堆 invoker 封装成 clusterInovker，给到消费者调用的就只有一个 invoker 了，
+ * <p>
+ * 然后在这个 clusterInovker 内部还能做各种操作，比如选择一个 invoker ，调用出错了可以换一个等等。
+ * <p>
  * Cluster. (SPI, Singleton, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Computer_cluster">Cluster</a>
  * <a href="http://en.wikipedia.org/wiki/Fault-tolerant_system">Fault-Tolerant</a>
- *
  */
 @SPI(Cluster.DEFAULT)
 public interface Cluster {

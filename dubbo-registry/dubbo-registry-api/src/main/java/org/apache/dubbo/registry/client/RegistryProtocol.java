@@ -474,6 +474,7 @@ public class RegistryProtocol implements Protocol {
             }
         }
 
+        // 默认failover集群容错
         Cluster cluster = Cluster.getCluster(qs.get(CLUSTER_KEY));
         // 调用 doRefer 继续执行服务引用逻辑
         return doRefer(cluster, registry, type, url);
@@ -508,8 +509,10 @@ public class RegistryProtocol implements Protocol {
             // 注册服务消费者，在 consumers 目录下新节点
             registry.register(directory.getRegisteredConsumerUrl());
         }
+        // 默认mock tag serviceRouter AppRouter
         directory.buildRouterChain(urlToRegistry);
         // 订阅 providers、configurators、routers 等节点数据
+        // 监听注册中心变化
         directory.subscribe(toSubscribeUrl(urlToRegistry));
         // 由于一个服务可能部署在多台服务器上，这样就会在 providers 产生多个节点，这个时候就需要 Cluster 将多个服务节点合并为一个，并生成一个 Invoker。
         // 一个注册中心可能有多个服务提供者，因此这里需要将多个服务提供者合并为一个

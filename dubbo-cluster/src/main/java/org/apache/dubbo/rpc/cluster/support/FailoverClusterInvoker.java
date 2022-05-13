@@ -58,27 +58,34 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
         List<Invoker<T>> copyInvokers = invokers;
         checkInvokers(copyInvokers, invocation);
         String methodName = RpcUtils.getMethodName(invocation);
+        // 获取重试次数，默认为2
         int len = getUrl().getMethodParameter(methodName, RETRIES_KEY, DEFAULT_RETRIES) + 1;
         if (len <= 0) {
             len = 1;
         }
+        // 重试
         // retry loop.
         RpcException le = null; // last exception.
         List<Invoker<T>> invoked = new ArrayList<Invoker<T>>(copyInvokers.size()); // invoked invokers.
+        // providers
         Set<String> providers = new HashSet<String>(len);
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < len; i++) { // 开始重试
             //Reselect before retry to avoid a change of candidate `invokers`.
             //NOTE: if `invokers` changed, then `invoked` also lose accuracy.
-            if (i > 0) {
+            if (i > 0) { // 每次执行调用之前都检查候选invokers是否发生改变
                 checkWhetherDestroyed();
+                //
                 copyInvokers = list(invocation);
                 // check again
                 checkInvokers(copyInvokers, invocation);
             }
+            // 负载均衡从多个Invokers中选择一个Invoker
             Invoker<T> invoker = select(loadbalance, invocation, copyInvokers, invoked);
             invoked.add(invoker);
+            //
             RpcContext.getContext().setInvokers((List) invoked);
             try {
+                // 发起调用
                 Result result = invoker.invoke(invocation);
                 if (le != null && logger.isWarnEnabled()) {
                     logger.warn("Although retry the method " + methodName
@@ -93,11 +100,13 @@ public class FailoverClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 }
                 return result;
             } catch (RpcException e) {
+                // 业务异常  直接向上抛出异常
                 if (e.isBiz()) { // biz exception.
                     throw e;
                 }
                 le = e;
             } catch (Throwable e) {
+                // 记录本次异常原因
                 le = new RpcException(e.getMessage(), e);
             } finally {
                 providers.add(invoker.getUrl().getAddress());

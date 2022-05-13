@@ -32,8 +32,13 @@ import org.apache.dubbo.rpc.Invoker;
  * @param <T>
  */
 public interface ClusterInvoker<T> extends Invoker<T> {
+
     URL getRegistryUrl();
 
+    /**
+     * 获取服务目录
+     * @return
+     */
     Directory<T> getDirectory();
 
     boolean isDestroyed();

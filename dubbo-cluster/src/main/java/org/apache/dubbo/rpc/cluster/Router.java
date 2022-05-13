@@ -24,6 +24,8 @@ import org.apache.dubbo.rpc.RpcException;
 import java.util.List;
 
 /**
+ * 服务路由其实就是路由规则，它规定了服务消费者可以调用哪些服务提供者
+ *
  * Router. (SPI, Prototype, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Routing">Routing</a>

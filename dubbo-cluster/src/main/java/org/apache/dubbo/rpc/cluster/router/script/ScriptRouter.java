@@ -47,6 +47,7 @@ import static org.apache.dubbo.rpc.cluster.Constants.RUNTIME_KEY;
 import static org.apache.dubbo.rpc.cluster.Constants.TYPE_KEY;
 
 /**
+ * 脚本路由
  * ScriptRouter
  */
 public class ScriptRouter extends AbstractRouter {

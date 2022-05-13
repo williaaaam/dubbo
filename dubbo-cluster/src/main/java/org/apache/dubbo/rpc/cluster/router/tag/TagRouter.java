@@ -44,6 +44,7 @@ import static org.apache.dubbo.common.constants.CommonConstants.TAG_KEY;
 import static org.apache.dubbo.rpc.Constants.FORCE_USE_TAG;
 
 /**
+ * 标签路由
  * TagRouter, "application.tag-router"
  */
 public class TagRouter extends AbstractRouter implements ConfigurationListener {

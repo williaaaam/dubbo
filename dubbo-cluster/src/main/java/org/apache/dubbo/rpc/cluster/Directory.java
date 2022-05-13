@@ -25,6 +25,8 @@ import org.apache.dubbo.rpc.RpcException;
 import java.util.List;
 
 /**
+ * 管理提供同样服务的多个Providers, 实际上就是一堆invoker的集合，只不过Provider存在上下线，所以有的目录服务还实现了监听注册中心的功能
+ *
  * Directory. (SPI, Prototype, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Directory_service">Directory Service</a>
