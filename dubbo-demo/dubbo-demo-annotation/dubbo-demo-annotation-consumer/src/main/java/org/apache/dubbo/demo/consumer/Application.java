@@ -24,18 +24,30 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
+import sun.nio.ch.ChannelInputStream;
+
+import java.io.IOException;
 
 public class Application {
     /**
      * In order to make sure multicast registry works, need to specify '-Djava.net.preferIPv4Stack=true' before
      * launch the application
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(ConsumerConfiguration.class);
         context.start();
         DemoService service = context.getBean("demoServiceComponent", DemoServiceComponent.class);
         String hello = service.sayHello("world");
         System.out.println("result :" + hello);
+
+        System.out.println("-------");
+        ChannelInputStream inputStream = service.getInputStream();
+        int count = 0;
+        byte[] bytes = new byte[1024];
+        while ((count = inputStream.read(bytes, 0, 1024)) != -1) {
+            System.out.println(new String(bytes, 0, count));
+        }
+
     }
 
     @Configuration

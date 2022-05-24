@@ -16,6 +16,15 @@
  */
 package org.apache.dubbo.demo;
 
+import sun.nio.ch.ChannelInputStream;
+import sun.nio.ch.FileChannelImpl;
+
+import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CompletableFuture;
 
 public interface DemoService {
@@ -25,5 +34,15 @@ public interface DemoService {
     default CompletableFuture<String> sayHelloAsync(String name) {
         return CompletableFuture.completedFuture(sayHello(name));
     }
+
+    default ChannelInputStream getInputStream(){
+        try {
+            FileChannel channel = FileChannel.open(Paths.get("/Users/william/Desktop/production.xml"), StandardOpenOption.READ);
+            return new ChannelInputStream(channel);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    };
 
 }

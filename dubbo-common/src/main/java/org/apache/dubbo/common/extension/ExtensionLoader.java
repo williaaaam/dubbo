@@ -86,21 +86,34 @@ public class ExtensionLoader<T> {
     private static final Pattern NAME_SEPARATOR = Pattern.compile("\\s*[,]+\\s*");
 
     /**
-     * cache
+     * cache 缓存ExtensionLoader,服务接口:ExtensionLoader
      */
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<>(64);
 
+    /**
+     * Class对象：服务实现类对象实例
+     */
     private static final ConcurrentMap<Class<?>, Object> EXTENSION_INSTANCES = new ConcurrentHashMap<>(64);
 
     private final Class<?> type;
 
     private final ExtensionFactory objectFactory;
 
+    /**
+     * 缓存实现类和扩展key名
+     */
     private final ConcurrentMap<Class<?>, String> cachedNames = new ConcurrentHashMap<>();
 
+    /**
+     * key:Class
+     */
     private final Holder<Map<String, Class<?>>> cachedClasses = new Holder<>();
 
     private final Map<String, Object> cachedActivates = new ConcurrentHashMap<>();
+
+    /**
+     * 缓存实例，key:Holder
+     */
     private final ConcurrentMap<String, Holder<Object>> cachedInstances = new ConcurrentHashMap<>();
     private final Holder<Object> cachedAdaptiveInstance = new Holder<>();
     private volatile Class<?> cachedAdaptiveClass = null;
@@ -429,6 +442,7 @@ public class ExtensionLoader<T> {
             // 查找默认实现类 @SPI注解（value=默认实现类）
             return getDefaultExtension();
         }
+        // 缓存实例
         final Holder<Object> holder = getOrCreateHolder(name);
         Object instance = holder.get();
         // 实现单例 double check
@@ -646,6 +660,7 @@ public class ExtensionLoader<T> {
      */
     private T createExtension(String name, boolean wrap) {
         // 解析SPI文件，加载文件里面对应key和实现类的map(用到很多缓存)
+        // 从配置文件中加载所有的拓展类，可得到“配置项名称”到“配置类”的映射关系表
         Class<?> clazz = getExtensionClasses().get(name);
         if (clazz == null) {
             throw findException(name);
@@ -657,13 +672,14 @@ public class ExtensionLoader<T> {
                 EXTENSION_INSTANCES.putIfAbsent(clazz, clazz.newInstance());
                 instance = (T) EXTENSION_INSTANCES.get(clazz);
             }
+
             // 在实例的基础上依赖注入 IOC
             injectExtension(instance);
 
             // AOP
             if (wrap) {
                 List<Class<?>> wrapperClassesList = new ArrayList<>();
-                // IName对饮的包装类
+                // IName对应的包装类
                 if (cachedWrapperClasses != null) {
                     wrapperClassesList.addAll(cachedWrapperClasses);
                     wrapperClassesList.sort(WrapperComparator.COMPARATOR);
@@ -671,6 +687,7 @@ public class ExtensionLoader<T> {
                 }
 
                 if (CollectionUtils.isNotEmpty(wrapperClassesList)) {
+                    // 循环创建 Wrapper 实例
                     for (Class<?> wrapperClass : wrapperClassesList) { // 多个包装类
                         Wrapper wrapper = wrapperClass.getAnnotation(Wrapper.class);
                         if (wrapper == null
@@ -681,6 +698,8 @@ public class ExtensionLoader<T> {
                              *
                              * }
                              * 将type对应实例替换为BenzImpl实例
+                             *
+                             * 替换instance
                              */
                             instance = injectExtension((T) wrapperClass.getConstructor(type).newInstance(instance));
                         }
@@ -855,6 +874,7 @@ public class ExtensionLoader<T> {
     }
 
     /**
+     * 缓存默认扩展名
      * extract and cache default extension name if exists
      */
     private void cacheDefaultExtensionName() {
@@ -1066,7 +1086,7 @@ public class ExtensionLoader<T> {
     }
 
     /**
-     * 对于一个接口的实现类只能有一个代理类
+     * 如果不允许覆盖的话，对于一个接口的实现类只能有一个代理类
      * cache Adaptive class which is annotated with <code>Adaptive</code>
      */
     private void cacheAdaptiveClass(Class<?> clazz, boolean overridden) {

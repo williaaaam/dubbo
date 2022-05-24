@@ -11,11 +11,11 @@ import dubbo.demo.spi.IOffer;
 public class JDOfferImpl implements IOffer {
 
     static {
-        System.out.println("Jd offer static");
+        //System.out.println("Jd offer static");
     }
 
     {
-        System.out.println("jd offer instance");
+        //System.out.println("jd offer instance");
     }
 
     @Override
